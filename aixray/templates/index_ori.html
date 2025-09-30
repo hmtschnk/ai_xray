@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TorchXRayVision</title>
+
+	<link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+	<link href="{{ url_for('static', filename='css/materialdesignicons.css') }}" rel="stylesheet">
+	
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_ori.css') }}">
+</head>
+
+<body class="bg-light">
+  <main>
+    <!-- Image Panel -->
+    <div class="image-panel p-2">
+      <div class="card">
+        <div class="card-header text-center text-muted small fw-bold">{{ input_img }}</div>
+        <div class="card-body d-flex justify-content-center align-items-center p-2">
+          <img src="{{ image_url }}" alt="{{ input_img }}" class="transition-opacity" id="xray-image">
+        </div>
+      </div>
+    </div>
+
+    <!-- Confidence Table Panel -->
+    <div class="table-panel p-2">
+      <!-- NOTE: .card.table-card uses CSS Grid so the header height is respected and the .pathology-panel scrolls -->
+      <div class="card table-card">
+        <div class="card-header text-center text-muted small fw-bold">Confidence Level</div>
+
+        <!-- pathology-panel is the scrollable panel (no .card-body wrapper required) -->
+		
+        <!-- original list all diseases
+		<div class="pathology-panel p-0">
+          <table class="table table-sm table-borderless m-0">
+            <tbody>
+              {% set max_confidence = diseases.values() | max %}
+              {% for disease, confidence in diseases|dictsort(by='value', reverse=True) %}
+              <tr class="{% if confidence == max_confidence %}highlight-max{% elif confidence * 100 > 50 %}highlight-label{% endif %}">
+                <td class="px-2 py-1">
+                  <input type="checkbox" id="check-{{ disease }}" name="disease-checkbox" value="{{ disease }}">
+                </td>
+                <td class="disease-cell px-2 py-1">{{ disease }}</td>
+                <td class="risk-cell px-2 py-1 text-end">{{ (confidence * 100) | round(2) }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div> -->
+				
+		<!-- list top 4 diseases
+		<div class="pathology-panel p-0">
+		  <table class="table table-sm table-borderless m-0">
+			<tbody>
+			  {% set max_confidence = diseases.values() | max %}
+			  {% for disease, confidence in diseases|dictsort(by='value', reverse=True) %}
+				{% if loop.index0 < 4 %}
+				  <tr class="{% if confidence == max_confidence %}highlight-max{% elif confidence * 100 > 50 %}highlight-label{% endif %}">
+					<td class="px-2 py-1">
+					  <input type="checkbox" id="check-{{ disease }}" name="disease-checkbox" value="{{ disease }}">
+					</td>
+					<td class="disease-cell px-2 py-1">{{ disease }}</td>
+					<td class="risk-cell px-2 py-1 text-end">{{ (confidence * 100) | round(2) }}%</td>
+				  </tr>
+				{% endif %}
+			  {% endfor %}
+			</tbody>
+		  </table>
+		</div> --> 
+
+		<!-- list dynamic confidence diseases -->
+		<div class="pathology-panel p-0">
+		<table class="table table-sm table-borderless m-0">
+			{% set high_threshold = 0.40 %}  {# 69% #}
+			{% set low_threshold = 0.40 %}   {# 40% #}
+			{% set top_n = 4 %}              {# Show top 4 diseases above high_threshold #}
+			<tbody>
+			  {% set max_confidence = diseases.values() | max %}
+			  {% set high_confidence_diseases = diseases.items() | selectattr("1", "gt", high_threshold) | list %}
+			  
+			  {% if high_confidence_diseases %}
+				{% set sorted_diseases = high_confidence_diseases | sort(attribute=1, reverse=True) %}
+				{% for disease, confidence in sorted_diseases %}
+				  {% if loop.index <= top_n %}
+				  <tr class="{% if confidence == max_confidence %}highlight-max{% elif confidence > low_threshold %}highlight-label{% endif %}">
+					<td class="px-2 py-1">
+					  <input type="checkbox" id="check-{{ disease }}" name="disease-checkbox" value="{{ disease }}">
+					</td>
+					<td class="disease-cell px-2 py-1">{{ disease }}</td>
+					<td class="risk-cell px-2 py-1 text-end">{{ (confidence * 100) | round(2) }}%</td>
+				  </tr>
+				  {% endif %}
+				{% endfor %}
+			  {% else %}
+				<tr>
+				  <td colspan="3" class="px-2 py-1 text-center text-red-600">
+					Accuracy too low — results not reliable
+				  </td>
+				</tr>
+			  {% endif %}
+			</tbody>
+		</table>
+		</div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="disclaimer text-center text-muted small py-2">
+    **This app provides informational X-ray report insights only and is not a substitute for professional medical advice.
+    Always consult a licensed healthcare provider for diagnosis or treatment.
+  </footer>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Updated shorter JS -->
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const maxSelections = 4;
+    const checkboxes = document.querySelectorAll('input[name="disease-checkbox"]');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const mainImage = document.getElementById('xray-image');
+    const debugOutput = document.getElementById("selected-debug");
+    const imageId = "{{ xray_id }}";
+    const prechecked = {{ selected_diseases | tojson | safe }};
+
+    const showLoading = () => loadingOverlay.style.display = "flex";
+    const hideLoading = () => loadingOverlay.style.display = "none";
+
+    const updateCheckboxStates = () => {
+      const checkedCount = [...checkboxes].filter(cb => cb.checked).length;
+      checkboxes.forEach(cb => cb.disabled = !cb.checked && checkedCount >= maxSelections);
+    };
+
+    const sendToFlask = values => {
+      showLoading();
+      fetch('/update_selected_diseases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected_diseases: values, image_id: imageId }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success' && data.image_url) {
+          const refreshedUrl = `${data.image_url}?t=${Date.now()}`;
+          mainImage.style.opacity = 0;
+          mainImage.onload = () => { mainImage.style.opacity = 1; hideLoading(); };
+          mainImage.src = refreshedUrl;
+        } else hideLoading();
+      })
+      .catch(err => { console.error(err); hideLoading(); });
+    };
+
+    const handleChange = () => {
+      const checkedValues = [...checkboxes].filter(cb => cb.checked).map(cb => cb.value);
+      if (debugOutput) debugOutput.textContent = JSON.stringify(checkedValues, null, 2);
+      updateCheckboxStates();
+      sendToFlask(checkedValues);
+    };
+
+    checkboxes.forEach(cb => {
+      if (prechecked.includes(cb.value)) cb.checked = true;
+      cb.addEventListener("change", handleChange);
+    });
+
+    updateCheckboxStates();
+  });
+  </script>
+</body>
+</html>

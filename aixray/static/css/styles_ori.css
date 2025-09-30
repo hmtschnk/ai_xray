@@ -1,0 +1,269 @@
+/* ============================
+   RESET & BASE
+   ============================ */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column; /* keep footer visible */
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  color: #222;
+}
+
+/* Helper for opacity transitions */
+.transition-opacity {
+  transition: opacity 0.25s ease-in-out;
+}
+
+/* ============================
+   MAIN LAYOUT
+   ============================ */
+main {
+  flex: 1 1 auto;       /* take remaining space above footer */
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  min-height: 0;        /* CRITICAL: prevents children overflow in flexboxes */
+  align-items: stretch;
+}
+
+/* Panels: left image (fluid) and right table (fixed-ish) */
+.image-panel {
+  flex: 1 1 0%;         /* grow to fill remaining space */
+  min-width: 0;         /* CRITICAL: allow children to shrink (prevents overflow) */
+  display: flex;
+  flex-direction: column;
+}
+
+.table-panel {
+  flex: 0 0 320px;      /* preferred width for side panel */
+  max-width: 40%;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ============================
+   CARD / IMAGE
+   ============================ */
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;        /* CRITICAL: avoid overflow with flex children */
+}
+
+/* Use a special grid layout for cards that need a fixed header + scrollable body.
+   We only apply this to .card.table-card so the image card remains untouched. */
+.card.table-card {
+  display: grid;
+  grid-template-rows: auto 1fr; /* header height auto, body fills remaining */
+  height: 100%;
+  min-height: 0;
+}
+
+.card-header {
+  flex: 0 0 auto;
+  word-break: break-all;
+  padding: 0.5rem 0.75rem;
+  /* ensure header sits above the scrolling content if browser supports sticky behavior */
+  position: relative;
+  z-index: 2;
+  background-clip: padding-box; /* keeps background correct if we later make it sticky */
+}
+
+.card-body {
+  flex: 1 1 auto;
+  min-height: 0;        /* CRITICAL: allows .card-body children to scroll/fit */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0.5rem;
+}
+
+/* Image sizing */
+#xray-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* smaller screens: keep image visible but sensible */
+@media (max-width: 576px) {
+  #xray-image {
+    max-height: 40vh;
+  }
+}
+
+/* ============================
+   PATHOLOGY PANEL (TABLE)
+   ============================ */
+/* The scrollable area used by the table card (when using .card.table-card) */
+.pathology-panel {
+  min-height: 0;        /* allow vertical scrolling inside this panel */
+  overflow-y: auto;
+  width: 100%;
+  padding: 0;           /* we keep padding zero to keep table flush */
+}
+
+/* If you previously had .card-body.pathology-panel, leave this as a fallback */
+.card-body.pathology-panel {
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: 0; /* we no longer need extra top padding */
+}
+
+/* TABLE */
+.table {
+  width: 100%;
+  font-size: 14px;
+  border-collapse: separate;
+  margin: 0; /* ensure no default margin pushes it under header */
+}
+
+.table tbody tr td {
+  vertical-align: middle;
+  padding: 6px 12px;
+}
+
+/* highlight rows */
+.highlight-label {
+  background-color: #fef9e7 !important;
+  color: #b20000;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.highlight-max {
+  background-color: #fff3cd !important;
+  color: #000;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+/* keep td styling consistent even when row has custom class */
+tr.highlight-label td,
+tr.highlight-max td {
+  background-color: inherit;
+  color: inherit;
+  font-weight: inherit;
+}
+
+.disease-cell { font-weight: 500; }
+.risk-cell {
+  text-align: right;
+  font-weight: bold;
+  color: #b00;
+}
+
+/* ============================
+   SLIDERS / GAUGE
+   ============================ */
+.confidence-slider {
+  width: 100%;
+  height: 0.5vh;
+  background: #ddd;
+  border-radius: 0.3vh;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.confidence-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 1.2vh;
+  height: 1.2vh;
+  background: blue;
+  border-radius: 50%;
+  cursor: not-allowed;
+}
+.confidence-slider::-moz-range-thumb {
+  width: 1.2vh;
+  height: 1.2vh;
+  background: blue;
+  border-radius: 50%;
+  cursor: not-allowed;
+}
+
+.gauge-item {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0.3rem 0;
+  width: 100%;
+  min-height: 0;
+}
+.gauge-item label {
+  font-size: clamp(0.55rem, 0.5rem + 0.3vw, 1rem);
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+/* TINY MCE cleanup (if used) */
+.tox-editor-container,
+.tox.tox-tinymce {
+  border: none !important;
+  box-shadow: none !important;
+  width: 100% !important;
+}
+
+/* ============================
+   FOOTER
+   ============================ */
+footer.disclaimer {
+  flex-shrink: 0;              /* always visible; does not collapse */
+  background-color: #f8f9fa;
+  border-top: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* ============================
+   LOADING OVERLAY
+   ============================ */
+.loading-overlay,
+#loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;                    /* top:0; right:0; bottom:0; left:0; */
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ============================
+   UTILITIES
+   ============================ */
+.mb-0 { margin-bottom: 0 !important; }
+
+/* make layout stack vertically on narrow screens */
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+  }
+  .table-panel {
+    flex: 0 0 auto;
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
+    order: 2; /* put table under image */
+  }
+  .image-panel { order: 1; }
+}

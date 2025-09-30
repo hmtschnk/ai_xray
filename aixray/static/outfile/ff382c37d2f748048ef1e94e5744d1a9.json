@@ -1,0 +1,24 @@
+{
+    "id": "ff382c37d2f748048ef1e94e5744d1a9",
+    "input_img": "ff382c37d2f748048ef1e94e5744d1a9.jpg",
+    "results": {
+        "Atelectasis": 0.05639120191335678,
+        "Consolidation": 0.029934730380773544,
+        "Infiltration": 0.13378757238388062,
+        "Pneumothorax": 0.3005160093307495,
+        "Edema": 0.04008215665817261,
+        "Emphysema": 0.5023727416992188,
+        "Fibrosis": 0.07630807161331177,
+        "Effusion": 0.014552950859069824,
+        "Pneumonia": 0.26367467641830444,
+        "Pleural_Thickening": 0.5006551146507263,
+        "Cardiomegaly": 0.03563990816473961,
+        "Nodule": 0.5089311003684998,
+        "Mass": 0.1009136438369751,
+        "Hernia": 0.0027078576385974884,
+        "Lung Lesion": 0.07061858475208282,
+        "Fracture": 0.19842413067817688,
+        "Lung Opacity": 0.16343368589878082,
+        "Enlarged Cardiomediastinum": 0.2793051600456238
+    }
+}

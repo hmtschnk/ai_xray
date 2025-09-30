@@ -1,0 +1,150 @@
+/* ============================
+   VARIABLES
+   ============================ */
+:root {
+  --gap: clamp(0.5rem, 1vw, 1.5rem);
+}
+
+/* ============================
+   RESET & BASE
+   ============================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  color: #222;
+  overflow: hidden; /* page never scrolls; panels do */
+}
+
+/* Helper */
+.transition-opacity { transition: opacity 0.25s ease-in-out; }
+
+/* ============================
+   MAIN LAYOUT
+   ============================ */
+main {
+  flex: 1 1 auto;
+  display: flex;
+  gap: var(--gap);       /* gap between panels */
+  padding: var(--gap);   /* gap to screen edges (left/right/top/bottom) */
+  min-height: 0;         /* allow children to size/scroll */
+  align-items: stretch;
+  overflow: hidden;
+}
+
+/* Panels use flex weights (4:3:3) so gaps+padding never clip */
+.image-panel  { flex: 8 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.middle-panel { flex: 7 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.table-panel  { flex: 5 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ============================
+   CARD / IMAGE
+   ============================ */
+.card, .card.table-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0; /* critical for internal scrolling */
+}
+
+.card-header {
+  flex: 0 0 auto;
+  word-break: break-all;
+  padding: 0.5rem 0.75rem;
+  background-clip: padding-box;
+}
+
+.card-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto; /* panels scroll, not page */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+/* Image sizing */
+#xray-image { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+@media (max-width: 576px) { #xray-image { max-height: 40vh; } }
+
+/* ============================
+   TABLE PANEL SPLIT (70/30)
+   ============================ */
+.split-panel.confidence { flex: 0 0 70%; min-height: 0; display: flex; flex-direction: column; border-bottom: 1px solid #ddd; }
+.split-panel.manual     { flex: 0 0 30%; min-height: 0; display: flex; flex-direction: column; }
+
+.scrollable-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto; /* scrollbars only here */
+  width: 100%;
+  padding: 0;
+}
+
+/* ============================
+   PATHOLOGY TABLE
+   ============================ */
+.table { width: 100%; font-size: 14px; border-collapse: separate; margin: 0; }
+.table tbody tr td { vertical-align: middle; padding: 6px 12px; }
+
+.highlight-label { background-color: #fef9e7 !important; color: #b20000; font-weight: bold; border-radius: 4px; }
+.highlight-max   { background-color: #fff3cd !important; color: #000;    font-weight: bold; border-radius: 4px; }
+
+tr.highlight-label td, tr.highlight-max td { background-color: inherit; color: inherit; font-weight: inherit; }
+
+.disease-cell { font-weight: 500; }
+.risk-cell { text-align: right; font-weight: bold; color: #b00; }
+
+/* ============================
+   SLIDERS / GAUGE (if used)
+   ============================ */
+.confidence-slider { width: 100%; height: 0.5vh; background: #ddd; border-radius: 0.3vh; -webkit-appearance: none; appearance: none; }
+.confidence-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 1.2vh; height: 1.2vh; background: blue; border-radius: 50%; cursor: not-allowed; }
+.confidence-slider::-moz-range-thumb     { width: 1.2vh; height: 1.2vh; background: blue; border-radius: 50%; cursor: not-allowed; }
+
+.gauge-item { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0.3rem 0; width: 100%; min-height: 0; }
+.gauge-item label { font-size: clamp(0.55rem, 0.5rem + 0.3vw, 1rem); margin-bottom: 2px; text-align: center; }
+
+/* ============================
+   FOOTER
+   ============================ */
+footer.disclaimer {
+  flex-shrink: 0;
+  background-color: #f8f9fa;
+  border-top: 1px solid #ddd;
+  padding: var(--gap);
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* ============================
+   LOADING OVERLAY
+   ============================ */
+.loading-overlay, #loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ============================
+   RESPONSIVE
+   ============================ */
+@media (max-width: 768px) {
+  main { flex-direction: column; }
+  .image-panel, .middle-panel, .table-panel {
+    flex: 0 0 auto;
+    max-width: 100%;
+    width: 100%;
+    min-wid
