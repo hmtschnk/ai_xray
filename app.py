@@ -243,18 +243,18 @@ def uploader():
 
     return render_template('file_uploaderv3.html')
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', choices=['dev', 'prod'], default='dev', help='Run mode: dev or prod')
-    parser.add_argument('--host', default='0.0.0.0', help='Host to bind')
-    parser.add_argument('--port', type=int, default=5000, help='Port to bind')
-    parser.add_argument('--threads', type=int, default=8, help='Threads for prod mode')
-    args = parser.parse_args()
+# if __name__ == '__main__':
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--mode', choices=['dev', 'prod'], default='dev', help='Run mode: dev or prod')
+    # parser.add_argument('--host', default='0.0.0.0', help='Host to bind')
+    # parser.add_argument('--port', type=int, default=5000, help='Port to bind')
+    # parser.add_argument('--threads', type=int, default=8, help='Threads for prod mode')
+    # args = parser.parse_args()
 
-    if args.mode == 'prod':
-        from waitress import serve
-        print(f"Starting production server on {args.host}:{args.port} with {args.threads} threads")
-        serve(app, host=args.host, port=args.port, threads=args.threads)
-    else:
-        print(f"Starting development server on {args.host}:{args.port} (threaded)")
-        app.run(host=args.host, port=args.port, debug=True, threaded=True)
+    # if args.mode == 'prod':
+        # from waitress import serve
+        # print(f"Starting production server on {args.host}:{args.port} with {args.threads} threads")
+        # serve(app, host=args.host, port=args.port, threads=args.threads)
+    # else:
+        # print(f"Starting development server on {args.host}:{args.port} (threaded)")
+        # app.run(host=args.host, port=args.port, debug=True, threaded=True)
