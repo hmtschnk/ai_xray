@@ -1,5 +1,6 @@
 import argparse
 from flask import Flask, render_template, request, jsonify, url_for, session, send_file, make_response, redirect
+from flask_cors import CORS
 from torchxrayvision_APIv4_OO import ImagePreprocessor, XRayProcessor, XRayVisualizer
 import os
 import json
@@ -15,9 +16,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from safetensors import safe_open
+import requests
+from werkzeug.datastructures import FileStorage
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 app.secret_key = 'your_super_secret_key_here'  # Needed for session management and security
+
+CORS(app)
 
 # Directories for input and output files
 OUTFILE = 'static/outfile'
@@ -87,16 +93,56 @@ def view(image_id):
 def process_upload():
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
+    if 'file' in request.files:
+        file = request.files['file']
 
-    file = request.files['file']
+    elif request.json and 'url' in request.json:
+        print(f'request is {request.json}')
+        image_url = request.json['url']
+
+        try:
+            r = requests.get(image_url, timeout=10)
+            r.raise_for_status()
+        except Exception as e:
+            return jsonify({"error": f"Failed to fetch from {image_url}: {str(e)}"}), 400
+
+        # Extract file_name from URL path
+        path_parts = urlparse(image_url).path.split("/")
+        # ["", "instances", "abcd-1234", "preview"]
+        if len(path_parts) < 3:
+            return jsonify({"error": "Invalid URL format"}), 400
+
+        file_name = path_parts[2]  # abcd-1234
+
+        # Decide extension (assume jpg/png/dcm, or fallback jpg)
+        content_type = r.headers.get("Content-Type", "").lower()
+        if "png" in content_type:
+            ext = ".png"
+        elif "jpeg" in content_type or "jpg" in content_type:
+            ext = ".jpg"
+        elif "dicom" in content_type or file_name.endswith(".dcm"):
+            ext = ".dcm"
+        else:
+            ext = ".jpg"  # safe fallback
+
+        filename = f"{file_name}{ext}"
+
+        # Wrap into FileStorage
+        file = FileStorage(
+            stream=BytesIO(r.content),
+            filename=filename,
+            content_type=content_type
+        )
+
+    else:
+        return jsonify({"error": "No file or url provided"}), 400
+
     if file.filename == '':
         return jsonify({"error": "Empty filename"}), 400
 
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in ['.jpg', '.dcm', '.png']:
-        return jsonify({"error": "Only .jpg and .dcm formats supported"}), 400
+        return jsonify({"error": "Only .jpg, .png and .dcm formats supported"}), 400
 
     unique_id = uuid.uuid4().hex
     input_path = os.path.join(INFILE, f"{unique_id}{ext}")
@@ -212,8 +258,8 @@ def uploader():
             return jsonify({"error": "Empty filename"}), 400
 
         ext = os.path.splitext(file.filename)[1].lower()
-        if ext not in ['.jpg', '.dcm']:
-            return jsonify({"error": "Only .jpg and .dcm formats supported"}), 400
+        if ext not in ['.jpg', '.dcm', '.png']:
+            return jsonify({"error": "Only .jpg, .png and .dcm formats supported"}), 400
 
         unique_id = uuid.uuid4().hex
         input_path = os.path.join(INFILE, f"{unique_id}{ext}")
